@@ -1,9 +1,6 @@
 import pandas as pd
 import numpy as np
 import time
-import os
-# 指定使用0,1,2三块卡
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2"
 
 T1 = time.time()
 df_test = pd.read_csv('test.csv')
