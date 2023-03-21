@@ -5,9 +5,12 @@ import torch
 import torch.nn.functional as Fun
 import time
 
+# 指定gpu
+device = torch.device("cuda:0"if torch.cuda.is_available()else "cpu")
+
 # 参数设置
 lr = 0.02
-epochs = 300
+epochs = 3000
 n_feature = 783
 n_hidden = 20
 n_output = 10
@@ -38,10 +41,10 @@ min_max_scaler = preprocessing.MinMaxScaler()
 df_train = min_max_scaler.fit_transform(df_train0)
 df_test = min_max_scaler.fit_transform(df_test)
 
-x_train = torch.FloatTensor(df_train)
-x_train_answer = torch.LongTensor(df_train1)
-x_test = torch.FloatTensor(df_test)
-x_test_answer = torch.FloatTensor(df_answer)
+x_train = torch.FloatTensor(df_train).to(device)
+x_train_answer = torch.LongTensor(df_train1).to(device)
+x_test = torch.FloatTensor(df_test).to(device)
+x_test_answer = torch.FloatTensor(df_answer).to(device)
 
 
 class BPnetwork(torch.nn.Module):
@@ -56,7 +59,7 @@ class BPnetwork(torch.nn.Module):
         return out
 
 
-net = BPnetwork(n_feature=n_feature, n_hidden=n_hidden, n_output=n_output)
+net = BPnetwork(n_feature=n_feature, n_hidden=n_hidden, n_output=n_output).to(device)
 optimizer = torch.optim.Adam(net.parameters(), lr=lr)
 loss_fun = torch.nn.CrossEntropyLoss()
 
@@ -65,7 +68,7 @@ loss_steps = np.zeros(epochs)
 accuracy_steps = np.zeros(epochs)
 
 for epoch in range(epochs):
-    train_pred = net(x_train)
+    train_pred = net(x_train).to(device)
     loss = loss_fun(train_pred, x_train_answer)
     optimizer.zero_grad()
     loss.backward()
@@ -74,7 +77,7 @@ for epoch in range(epochs):
     running_loss = loss.item()
     print(f"第{epoch}次训练，loss={running_loss}".format(epoch, running_loss))
     with torch.no_grad():
-        test_pred = net(x_test)
+        test_pred = net(x_test).to(device)
         c= torch.argmax(test_pred, dim=1)
 
 answer_=c.tolist()
@@ -84,4 +87,5 @@ for i in range(len(answer)):
         correct +=1
 print(len(answer),len(answer_))
 print(correct/len(answer))
-
+T2 = time.time()
+print('程序运行时间:%s秒' % ((T2 - T1)))
